@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách nhân sự</title>
+    <title>Danh bạ điiện thoại </title>
 
     <!-- Bootstrap -->
     <link rel="stylesheet"
@@ -29,7 +29,7 @@
     <div class="card shadow">
         <div class="card-body">
             <h3 class="fw-bold text-primary mb-4">
-                Danh sách nhân sự (Google Sheet)
+                DANH BAJ ĐIỆN THOẠI TRẠM Y TẾ PHƯỜNG BÌNH THỚI
             </h3>
 
             <table id="myTable" class="table table-striped table-bordered" width="100%">
@@ -50,42 +50,55 @@
 </div>
 
 <script>
-$(document).ready(function () {
+let dataTable = null;
+const REFRESH_TIME = 5000; // 5 giây
+const sheetURL =
+  "https://docs.google.com/spreadsheets/d/1Vpq9LUlp-9yH24_kRzpc9OxGNhvlGfiQDwGA9jA6qHk/export?format=csv";
 
-    const sheetURL =
-      "https://docs.google.com/spreadsheets/d/1Vpq9LUlp-9yH24_kRzpc9OxGNhvlGfiQDwGA9jA6qHk/export?format=csv";
+// Hàm load dữ liệu Google Sheet
+async function loadData(firstLoad = false) {
+    let res = await fetch(sheetURL + "&t=" + new Date().getTime()); 
+    let csv = await res.text();
 
-    fetch(sheetURL)
-        .then(res => res.text())
-        .then(csv => {
-            let rows = csv.split("\n").map(r => r.split(","));
+    let rows = csv.split("\n").map(row => row.split(","));
 
-            rows.shift(); // Bỏ header
+    rows.shift(); // bỏ header
 
-            rows.forEach(r => {
-                $("#myTable tbody").append(`
-                    <tr>
-                        <td>${r[0] || ""}</td>
-                        <td>${r[1] || ""}</td>
-                        <td>${r[2] || ""}</td>
-                        <td>${r[3] || ""}</td>
-                        <td>${r[4] || ""}</td>
-                        <td>${r[5] || ""}</td>
-                    </tr>
-                `);
-            });
+    let data = rows.map(r => [
+        r[0] || "",
+        r[1] || "",
+        r[2] || "",
+        r[3] || "",
+        r[4] || "",
+        r[5] || ""
+    ]);
 
-            // Khởi tạo DataTable Bootstrap 5
-            $("#myTable").DataTable({
-                language: {
-                    url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
-                },
-                pageLength: 15,
-                responsive: true
-            });
+    if (firstLoad) {
+        // Lần đầu khởi tạo DataTable
+        dataTable = $("#myTable").DataTable({
+            data: data,
+            pageLength: 15,
+            responsive: true,
+            language: { 
+                url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/vi.json"
+            }
         });
-});
+    } else {
+        // Lần sau: cập nhật realtime
+        dataTable.clear();
+        dataTable.rows.add(data);
+        dataTable.draw(false); // giữ nguyên trang hiện tại
+    }
+}
+
+// Lần đầu load
+loadData(true);
+
+// Lặp lại sau mỗi X giây
+setInterval(() => loadData(false), REFRESH_TIME);
 </script>
+
 
 </body>
 </html>
+
